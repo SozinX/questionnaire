@@ -16,8 +16,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 @Controller
 
@@ -31,7 +34,7 @@ public class MainController {
     private AnswerRepository answerRepository;
     @Autowired
     private QuizRepository quizRepository;
-    private long currentPatientId;
+
 
     @GetMapping(path = "/patient")
     public String patient(Map<String, Object> model) {
@@ -39,22 +42,26 @@ public class MainController {
     }
 
     @PostMapping(path = "/patient")
-    public ModelAndView addNewPatient(@RequestParam String firstName,
-                                      @RequestParam String lastName,
-                                      @RequestParam String phoneNumber,
-                                      @RequestParam String dateOfBirth,
-                                      Map<String, Object> model) {
+    public String addNewPatient(@RequestParam String firstName,
+                                @RequestParam String lastName,
+                                @RequestParam String phoneNumber,
+                                @RequestParam String dateOfBirth,
+                                Map<String, Object> model,
+                                HttpSession session) {
         Patient patient = new Patient(firstName, lastName, phoneNumber, dateOfBirth);
         this.patientRepository.save(patient);
-        this.currentPatientId = patient.getPatientId();
-        return new ModelAndView("redirect:/questionnaire");
+        session.setAttribute("currentPatientId", patient.getPatientId());
+        return "redirect:/questionnaire";
     }
 
     @GetMapping(path = "/questionnaire")
-    public String printQuiz(Map<String, Object> model) {
+    public String printQuiz(Map<String, Object> model, HttpServletRequest request) {
+        if (Objects.equals(request.getSession().getAttribute("currentPatientId"),null)) {
+            return "redirect:/patient";
+        }
         Iterable<Question> questions = questionRepository.findAll();
         Iterable<Answer> answers = answerRepository.findAll();
-        model.put("userId", currentPatientId);
+        model.put("userId", Long.parseLong(request.getSession().getAttribute("currentPatientId").toString()));
         model.put("questions", questions);
         model.put("answers", answers);
         return "questionnaire";
@@ -62,21 +69,23 @@ public class MainController {
 
     @PostMapping(path = "/questionnaire")
     public String saveAnswers(HttpServletRequest request) {
+        if (Objects.equals(request.getSession().getAttribute("currentPatientId"),null)) {
+            return "redirect:/patient";
+        }
         ArrayList<Quiz> result = new ArrayList<>();
         String[] questionsIds = request.getParameterValues("questionId");
         for (String id : questionsIds) {
             try {
-                Patient patient = patientRepository.findByPatientId(currentPatientId).get(0);
+                Patient patient = patientRepository.findByPatientId(Long.parseLong(request.getSession().getAttribute("currentPatientId").toString())).get(0);
                 Question question = questionRepository.findByQuestionId(Integer.parseInt(id)).get(0);
                 Answer answer = answerRepository.findByAnswerId(Integer.parseInt(request.getParameterValues("question_" + id)[0])).get(0);
                 Quiz quiz = new Quiz(patient, question, answer);
                 result.add(quiz);
             } catch (NullPointerException e) {
-                return "questionnaire";
+                return "redirect:/questionnaire";
             }
         }
         this.quizRepository.saveAll(result);
-        System.out.println("Done");
         return "questionnaire";
     }
 }
