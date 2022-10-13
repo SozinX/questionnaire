@@ -1,0 +1,20 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Questionnaire Testing</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+<form method="post">
+    {{#questions}}
+        <input type="hidden" name="patientId" value="{{userId}}"><br>
+        <input type="hidden" name="questionId" value="{{questionId}}">
+        <span>{{questionId}}. </span> <span>{{question}}</span><br>
+        {{#answers}}
+            <input type="radio" name="question_{{questionId}}" value="{{answerId}}"> {{answer}}<br>
+        {{/answers}}
+    {{/questions}}
+    <button type="submit">Send</button>
+</form>
+</body>
+</html>
