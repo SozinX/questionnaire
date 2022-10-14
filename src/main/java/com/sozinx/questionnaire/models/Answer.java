@@ -1,4 +1,4 @@
-package com.sozinx.questionnaire.model;
+package com.sozinx.questionnaire.models;
 
 import javax.persistence.*;
 import java.util.Set;

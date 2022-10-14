@@ -1,6 +1,6 @@
 package com.sozinx.questionnaire.controller;
 
-import com.sozinx.questionnaire.model.*;
+import com.sozinx.questionnaire.models.*;
 import com.sozinx.questionnaire.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -15,7 +15,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Controller
-
 public class MainController {
 
     @Autowired
@@ -61,7 +60,7 @@ public class MainController {
     }
 
     @PostMapping(path = "/questionnaire")
-    public String saveAnswers(HttpServletRequest request) {
+    public String saveAnswers(HttpServletRequest request, HttpSession session) {
         if (Objects.equals(request.getSession().getAttribute("currentPatientId"), null)) {
             return "redirect:/patient";
         }
@@ -79,6 +78,7 @@ public class MainController {
             }
         }
         this.quizRepository.saveAll(result);
+        session.setAttribute("isReady", "true");
         return "redirect:/result";
     }
 
@@ -86,6 +86,9 @@ public class MainController {
     public String getResults(Map<String, Object> model, HttpServletRequest request) {
         if (Objects.equals(request.getSession().getAttribute("currentPatientId"), null)) {
             return "redirect:/patient";
+        }
+        if (Objects.equals(request.getSession().getAttribute("isReady"), null)) {
+            return "redirect:/questionnaire";
         }
         String general = "GREEN";
         Patient patient = patientRepository.findByPatientId(Long.parseLong(request.getSession().getAttribute("currentPatientId").toString())).get(0);

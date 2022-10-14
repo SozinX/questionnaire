@@ -1,6 +1,6 @@
 package com.sozinx.questionnaire.repositories;
 
-import com.sozinx.questionnaire.model.Question;
+import com.sozinx.questionnaire.models.Question;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;

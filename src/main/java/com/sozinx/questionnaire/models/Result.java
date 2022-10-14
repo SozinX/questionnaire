@@ -1,4 +1,4 @@
-package com.sozinx.questionnaire.model;
+package com.sozinx.questionnaire.models;
 
 public class Result {
     private String scale;
