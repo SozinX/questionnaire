@@ -8,11 +8,11 @@
 <form method="post">
     {{#questions}}
         <input type="hidden" name="patientId" value="{{userId}}"><br>
-        <input type="hidden" name="questionId" value="{{questionId}}">
         <span>{{questionId}}. </span> <span>{{question}}</span><br>
         {{#answers}}
             <input type="radio" name="question_{{questionId}}" value="{{answerId}}"> {{answer}}<br>
         {{/answers}}
+        <input type="hidden" name="questionId" value="{{questionId}}">
     {{/questions}}
     <button type="submit">Send</button>
 </form>

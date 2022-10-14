@@ -1,6 +1,7 @@
 package com.sozinx.questionnaire.model;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.Set;
 
 @Entity
@@ -12,7 +13,12 @@ public class Patient {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private String dateOfBirth;
+
+
+    private LocalDate dateOfBirth;
+
+
+    private LocalDate dateOfQuiz;
     @OneToMany(mappedBy = "patient", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL)
     private Set<Quiz> quizzes;
@@ -20,11 +26,12 @@ public class Patient {
     public Patient() {
     }
 
-    public Patient(String firstName, String lastName, String phoneNumber, String dateOfBirth) {
+    public Patient(String firstName, String lastName, String phoneNumber, LocalDate dateOfBirth) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.dateOfBirth = dateOfBirth;
+        this.dateOfQuiz = java.time.LocalDate.now();
     }
 
 
@@ -56,11 +63,20 @@ public class Patient {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getDateOfBirth() {
+
+    public LocalDate getDateOfQuiz() {
+        return dateOfQuiz;
+    }
+
+    public void setDateOfQuiz(LocalDate dateOfQuiz) {
+        this.dateOfQuiz = dateOfQuiz;
+    }
+
+    public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public void setDateOfBirth(String dateOfBirth) {
+    public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
 }

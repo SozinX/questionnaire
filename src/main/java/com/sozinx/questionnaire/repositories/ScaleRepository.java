@@ -1,8 +1,12 @@
 package com.sozinx.questionnaire.repositories;
 
+
+import com.sozinx.questionnaire.model.Question;
 import com.sozinx.questionnaire.model.Scale;
 import org.springframework.data.repository.CrudRepository;
 
-public interface SubClassRepository extends CrudRepository<Scale, Long> {
+import java.util.List;
+
+public interface ScaleRepository extends CrudRepository<Scale, Long> {
 
 }

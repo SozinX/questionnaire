@@ -17,6 +17,10 @@ public class Question {
             cascade = CascadeType.ALL)
     private Set<Quiz> quizzes;
 
+    public Scale getScale() {
+        return scale;
+    }
+
     public long getQuestionId() {
         return questionId;
     }
