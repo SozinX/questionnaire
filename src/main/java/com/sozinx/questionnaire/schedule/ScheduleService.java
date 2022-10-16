@@ -21,24 +21,18 @@ public class ScheduleService {
     @Autowired
     private QuizRepository quizRepository;
     static final Logger LOGGER = Logger.getLogger(ScheduleService.class.getName());
-    private long id;
 
     @Scheduled(cron = "${interval-in-cron-every-day}")
     @Transactional
     public void deleteTrash() {
-        List<Patient> check = patientRepository.findByPatientIdGreaterThanAndDateOfQuizEquals(id, java.time.LocalDate.now().minus(Period.ofDays(1)));
-        try {
-            for (Patient c : check) {
-                if (quizRepository.findByPatient(c).isEmpty()) {
-                    LOGGER.log(Level.INFO, "Scheduled msg: Deleted patient with name {0}", c.getFirstName());
-                    patientRepository.deleteByPatientId(c.getPatientId());
-                }
-            }
-            this.id = check.get(check.size() - 1).getPatientId();
-            LOGGER.log(Level.INFO, "Scheduled msg: New start ID is {0}", id);
-        } catch (NullPointerException | IndexOutOfBoundsException e) {
+        List<Patient> check = patientRepository.findByDateOfQuizEquals(java.time.LocalDate.now().minus(Period.ofDays(1)));
+        if (!check.isEmpty()) {
+            check.stream().filter(current -> quizRepository.findByPatient(current).isEmpty()).forEach(delete -> {
+                LOGGER.log(Level.INFO, "Scheduled msg: Deleted patient with name {0}", delete.getFirstName());
+                patientRepository.deleteByPatientId(delete.getPatientId());
+            });
+        } else {
             LOGGER.log(Level.INFO, "Scheduled msg: No one took the test yesterday");
-            LOGGER.log(Level.INFO, "Scheduled msg: ID is  the same - {0}", id);
         }
 
     }

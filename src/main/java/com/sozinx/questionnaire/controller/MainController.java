@@ -2,6 +2,7 @@ package com.sozinx.questionnaire.controller;
 
 import com.sozinx.questionnaire.models.*;
 import com.sozinx.questionnaire.repositories.*;
+import com.sozinx.questionnaire.service.MainService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 @Controller
 public class MainController {
@@ -26,7 +26,7 @@ public class MainController {
     @Autowired
     private QuizRepository quizRepository;
     @Autowired
-    private ScaleRepository scaleRepository;
+    private MainService mainService;
 
     @GetMapping(path = "/patient")
     public String patient(Map<String, Object> model) {
@@ -47,32 +47,32 @@ public class MainController {
     }
 
     @GetMapping(path = "/questionnaire")
-    public String printQuiz(Map<String, Object> model, HttpServletRequest request) {
-        if (Objects.equals(request.getSession().getAttribute("currentPatientId"), null)) {
+    public String printQuiz(Map<String, Object> model,
+                            HttpServletRequest request) {
+        Object currentPatientId = request.getSession().getAttribute("currentPatientId");
+        if (Objects.equals(currentPatientId, null)) {
             return "redirect:/patient";
         }
-        Iterable<Question> questions = questionRepository.findAll();
-        Iterable<Answer> answers = answerRepository.findAll();
         model.put("userId", Long.parseLong(request.getSession().getAttribute("currentPatientId").toString()));
-        model.put("questions", questions);
-        model.put("answers", answers);
+        model.put("questions", questionRepository.findAll());
+        model.put("answers", answerRepository.findAll());
         return "questionnaire";
     }
 
     @PostMapping(path = "/questionnaire")
-    public String saveAnswers(HttpServletRequest request, HttpSession session) {
-        if (Objects.equals(request.getSession().getAttribute("currentPatientId"), null)) {
+    public String saveAnswers(HttpServletRequest request,
+                              HttpSession session) {
+        Object currentPatientId = request.getSession().getAttribute("currentPatientId");
+        if (Objects.equals(currentPatientId, null)) {
             return "redirect:/patient";
         }
         ArrayList<Quiz> result = new ArrayList<>();
         String[] questionsIds = request.getParameterValues("questionId");
         for (String id : questionsIds) {
             try {
-                Patient patient = patientRepository.findByPatientId(Long.parseLong(request.getSession().getAttribute("currentPatientId").toString())).get(0);
-                Question question = questionRepository.findByQuestionId(Integer.parseInt(id)).get(0);
-                Answer answer = answerRepository.findByAnswerId(Integer.parseInt(request.getParameterValues("question_" + id)[0])).get(0);
-                Quiz quiz = new Quiz(patient, question, answer);
-                result.add(quiz);
+                result.add(new Quiz(patientRepository.findByPatientId(Long.parseLong(currentPatientId.toString())).get(0),
+                        questionRepository.findByQuestionId(Integer.parseInt(id)).get(0),
+                        answerRepository.findByAnswerId(Integer.parseInt(request.getParameterValues("question_" + id)[0])).get(0)));
             } catch (NullPointerException e) {
                 return "redirect:/questionnaire";
             }
@@ -83,120 +83,33 @@ public class MainController {
     }
 
     @GetMapping(path = "/result")
-    public String getResults(Map<String, Object> model, HttpServletRequest request) {
-        if (Objects.equals(request.getSession().getAttribute("currentPatientId"), null)) {
+    public String getResults(Map<String, Object> model,
+                             HttpServletRequest request) {
+        Object currentPatientId = request.getSession().getAttribute("currentPatientId");
+        if (Objects.equals(currentPatientId, null)) {
             return "redirect:/patient";
         }
         if (Objects.equals(request.getSession().getAttribute("isReady"), null)) {
             return "redirect:/questionnaire";
         }
-        String general = "GREEN";
-        Patient patient = patientRepository.findByPatientId(Long.parseLong(request.getSession().getAttribute("currentPatientId").toString())).get(0);
+        String general;
+        Patient patient = patientRepository.findByPatientId(Long.parseLong(currentPatientId.toString())).get(0);
         List<Quiz> quizzes = quizRepository.findByPatient(patient);
-        Set<String> scales = new ConcurrentSkipListSet<>();
-        Map<String, Integer> points = new HashMap<>();
-        Map<String, String> status = new HashMap<>();
-        for (Quiz q : quizzes) {
-            scales.add(q.getQuestion().getScale().getName());
-            points.putIfAbsent(q.getQuestion().getScale().getName(), 0);
-            points.put(q.getQuestion().getScale().getName(), points.get(q.getQuestion().getScale().getName()) + q.getAnswer().getPoints());
-            status.put(q.getQuestion().getScale().getName(), "GREEN");
-        }
-        int redCount = 0;
-        int orangeCount = 0;
-        for (String s : scales) {
-            if (Objects.equals(s, "Vitality")) {
-                if (points.get(s) <= 8) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) <= 12) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "Social phobia")) {
-                if (points.get(s) >= 10) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) >= 7) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "Somatic complaints")) {
-                if (points.get(s) >= 9) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) >= 6) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "Depressed mood")) {
-                if (points.get(s) >= 9) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) >= 6) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "Cognitive problems")) {
-                if (points.get(s) >= 12) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) >= 8) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "Anxiety")) {
-                if (points.get(s) >= 12) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) >= 8) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "Agoraphobia")) {
-                if (points.get(s) >= 3) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) == 2) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "Aggression")) {
-                if (points.get(s) >= 6) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) >= 4) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-            if (Objects.equals(s, "School/work")) {
-                if (points.get(s) >= 12) {
-                    status.put(s, "RED");
-                    redCount++;
-                } else if (points.get(s) >= 8) {
-                    status.put(s, "ORANGE");
-                    orangeCount++;
-                }
-            }
-        }
-        if (redCount > 0 || orangeCount >= 3) {
+        Map<String, Integer> points = mainService.buildPoints(quizzes);
+        Map<String, String> status = mainService.buildStatus(points);
+        Map<String, Integer> counts = mainService.countOfStatuses(status);
+        if (counts.get("RED") > 0 || counts.get("ORANGE") >= 3) {
             general = "RED";
-        } else if (orangeCount == 2) {
+        } else if (counts.get("ORANGE") == 2) {
             general = "ORANGE";
+        } else {
+            general = "GREEN";
         }
         model.put("general", "General result   =   " + general);
         ArrayList<Result> result = new ArrayList<>();
-        for (String s : scales) {
-            result.add(new Result(s, points.get(s), status.get(s)));
-        }
+        status.forEach((key, value) -> {
+            result.add(new Result(key, points.get(key), value));
+        });
         model.put("results", result);
         return "result";
     }

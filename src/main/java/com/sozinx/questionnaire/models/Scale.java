@@ -9,16 +9,21 @@ public class Scale {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long scaleId;
-    private String name;
+    private String scaleName;
     @OneToMany(mappedBy = "scale", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL)
     private Set<Question> questions;
+    @OneToMany(mappedBy = "scale", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL)
+    private Set<Range> ranges;
 
-    public String getName() {
-        return name;
+    public String getScaleName() {
+        return scaleName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setScaleName(String scaleName) {
+        this.scaleName = scaleName;
     }
+
+
 }

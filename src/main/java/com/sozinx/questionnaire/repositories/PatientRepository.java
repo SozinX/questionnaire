@@ -9,7 +9,7 @@ import java.util.List;
 public interface PatientRepository extends CrudRepository<Patient, Long> {
     List<Patient> findByPatientId(long patientId);
 
-    List<Patient> findByPatientIdGreaterThanAndDateOfQuizEquals(long patientId, LocalDate dateOfQuiz);
+    List<Patient> findByDateOfQuizEquals(LocalDate dateOfQuiz);
 
     void deleteByPatientId(long id);
 }
