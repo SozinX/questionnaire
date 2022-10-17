@@ -13,4 +13,5 @@ public interface MainService {
 
     Map<String, Integer> countOfStatuses(Map<String, String> status);
 
+    String generateGeneralResult(Map<String, String> status);
 }

@@ -92,24 +92,13 @@ public class MainController {
         if (Objects.equals(request.getSession().getAttribute("isReady"), null)) {
             return "redirect:/questionnaire";
         }
-        String general;
-        Patient patient = patientRepository.findByPatientId(Long.parseLong(currentPatientId.toString())).get(0);
-        List<Quiz> quizzes = quizRepository.findByPatient(patient);
+        List<Quiz> quizzes = quizRepository.findByPatient(patientRepository.findByPatientId(Long.parseLong(currentPatientId.toString())).get(0));
         Map<String, Integer> points = mainService.buildPoints(quizzes);
         Map<String, String> status = mainService.buildStatus(points);
-        Map<String, Integer> counts = mainService.countOfStatuses(status);
-        if (counts.get("RED") > 0 || counts.get("ORANGE") >= 3) {
-            general = "RED";
-        } else if (counts.get("ORANGE") == 2) {
-            general = "ORANGE";
-        } else {
-            general = "GREEN";
-        }
+        String general = mainService.generateGeneralResult(status);
         model.put("general", "General result   =   " + general);
         ArrayList<Result> result = new ArrayList<>();
-        status.forEach((key, value) -> {
-            result.add(new Result(key, points.get(key), value));
-        });
+        status.forEach((key, value) -> result.add(new Result(key, points.get(key), value)));
         model.put("results", result);
         return "result";
     }

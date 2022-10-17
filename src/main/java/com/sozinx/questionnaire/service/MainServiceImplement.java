@@ -52,4 +52,15 @@ public class MainServiceImplement implements MainService {
         });
         return counts;
     }
+
+    @Override
+    public String generateGeneralResult(Map<String, String> status) {
+        Map<String, Integer> counts = countOfStatuses(status);
+        if (counts.get("RED") > 0 || counts.get("ORANGE") >= 3) {
+            return "RED";
+        } else if (counts.get("ORANGE") == 2) {
+            return "ORANGE";
+        }
+        return "GREEN";
+    }
 }
