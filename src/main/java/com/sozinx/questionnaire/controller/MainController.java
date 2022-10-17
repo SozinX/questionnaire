@@ -1,7 +1,6 @@
 package com.sozinx.questionnaire.controller;
 
 import com.sozinx.questionnaire.models.*;
-import com.sozinx.questionnaire.repositories.*;
 import com.sozinx.questionnaire.service.MainService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -11,20 +10,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.time.LocalDate;
 import java.util.*;
 
 @Controller
 public class MainController {
 
-    @Autowired
-    private PatientRepository patientRepository;
-    @Autowired
-    private QuestionRepository questionRepository;
-    @Autowired
-    private AnswerRepository answerRepository;
-    @Autowired
-    private QuizRepository quizRepository;
     @Autowired
     private MainService mainService;
 
@@ -40,9 +30,7 @@ public class MainController {
                                 @RequestParam String dateOfBirth,
                                 Map<String, Object> model,
                                 HttpSession session) {
-        Patient patient = new Patient(firstName, lastName, phoneNumber, LocalDate.parse(dateOfBirth));
-        this.patientRepository.save(patient);
-        session.setAttribute("currentPatientId", patient.getPatientId());
+        session.setAttribute("currentPatientId", this.mainService.savePatient(firstName, lastName, phoneNumber, dateOfBirth).getPatientId());
         return "redirect:/questionnaire";
     }
 
@@ -54,8 +42,8 @@ public class MainController {
             return "redirect:/patient";
         }
         model.put("userId", Long.parseLong(request.getSession().getAttribute("currentPatientId").toString()));
-        model.put("questions", questionRepository.findAll());
-        model.put("answers", answerRepository.findAll());
+        model.put("questions", this.mainService.findAllQuestions());
+        model.put("answers", this.mainService.findAllAnswers());
         return "questionnaire";
     }
 
@@ -70,14 +58,14 @@ public class MainController {
         String[] questionsIds = request.getParameterValues("questionId");
         for (String id : questionsIds) {
             try {
-                result.add(new Quiz(patientRepository.findByPatientId(Long.parseLong(currentPatientId.toString())).get(0),
-                        questionRepository.findByQuestionId(Integer.parseInt(id)).get(0),
-                        answerRepository.findByAnswerId(Integer.parseInt(request.getParameterValues("question_" + id)[0])).get(0)));
+                result.add(new Quiz(this.mainService.findByPatientId(Long.parseLong(currentPatientId.toString())).get(0),
+                        this.mainService.findByQuestionId(Integer.parseInt(id)).get(0),
+                        this.mainService.findByAnswerId(Integer.parseInt(request.getParameterValues("question_" + id)[0])).get(0)));
             } catch (NullPointerException e) {
                 return "redirect:/questionnaire";
             }
         }
-        this.quizRepository.saveAll(result);
+        this.mainService.saveAllResults(result);
         session.setAttribute("isReady", "true");
         return "redirect:/result";
     }
@@ -86,20 +74,12 @@ public class MainController {
     public String getResults(Map<String, Object> model,
                              HttpServletRequest request) {
         Object currentPatientId = request.getSession().getAttribute("currentPatientId");
-        if (Objects.equals(currentPatientId, null)) {
+        if (Objects.equals(currentPatientId, null))
             return "redirect:/patient";
-        }
-        if (Objects.equals(request.getSession().getAttribute("isReady"), null)) {
+        if (Objects.equals(request.getSession().getAttribute("isReady"), null))
             return "redirect:/questionnaire";
-        }
-        List<Quiz> quizzes = quizRepository.findByPatient(patientRepository.findByPatientId(Long.parseLong(currentPatientId.toString())).get(0));
-        Map<String, Integer> points = mainService.buildPoints(quizzes);
-        Map<String, String> status = mainService.buildStatus(points);
-        String general = mainService.generateGeneralResult(status);
-        model.put("general", "General result   =   " + general);
-        ArrayList<Result> result = new ArrayList<>();
-        status.forEach((key, value) -> result.add(new Result(key, points.get(key), value)));
-        model.put("results", result);
+        model.put("general", "General result   =   " + this.mainService.generateGeneralResult(currentPatientId));
+        model.put("results", this.mainService.generateAllResults(currentPatientId));
         return "result";
     }
 }
