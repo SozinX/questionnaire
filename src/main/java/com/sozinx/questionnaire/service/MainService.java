@@ -4,15 +4,8 @@ import com.sozinx.questionnaire.models.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public interface MainService {
-    Map<String, Integer> buildPoints(Object currentPatientId);
-
-    Map<String, String> buildStatus(Map<String, Integer> points);
-
-    Map<String, Integer> countOfStatuses(Map<String, String> status);
-
     String generateGeneralResult(Object currentPatientId);
 
     Patient savePatient(String firstName, String lastName, String phoneNumber, String dateOfBirth);

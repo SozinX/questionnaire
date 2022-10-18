@@ -9,18 +9,25 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Service
-public class MainServiceImplement implements MainService {
+@SuppressWarnings("unused")
+public class MainServiceImpl implements MainService {
     @Autowired
+    @SuppressWarnings("unused")
     private ScaleRepository scaleRepository;
     @Autowired
+    @SuppressWarnings("unused")
     private RangeRepository rangeRepository;
     @Autowired
+    @SuppressWarnings("unused")
     private PatientRepository patientRepository;
     @Autowired
+    @SuppressWarnings("unused")
     private QuestionRepository questionRepository;
     @Autowired
+    @SuppressWarnings("unused")
     private AnswerRepository answerRepository;
     @Autowired
+    @SuppressWarnings("unused")
     private QuizRepository quizRepository;
 
     @Override
@@ -30,8 +37,7 @@ public class MainServiceImplement implements MainService {
         return patient;
     }
 
-    @Override
-    public Map<String, Integer> buildPoints(Object currentPatientId) {
+    private Map<String, Integer> buildPoints(Object currentPatientId) {
         List<Quiz> quizzes = quizRepository.findByPatient(findByPatientId(Long.parseLong(currentPatientId.toString())).get(0));
         Map<String, Integer> points = new TreeMap<>();
         quizzes.forEach(q -> {
@@ -41,8 +47,7 @@ public class MainServiceImplement implements MainService {
         return points;
     }
 
-    @Override
-    public Map<String, String> buildStatus(Map<String, Integer> points) {
+    private Map<String, String> buildStatus(Map<String, Integer> points) {
         Map<String, String> status = new TreeMap<>();
         points.forEach((key, value) -> status.put(key,
                 this.rangeRepository.findByScaleAndMinPointsLessThanEqualAndMaxPointsGreaterThanEqual(
@@ -53,8 +58,7 @@ public class MainServiceImplement implements MainService {
         return status;
     }
 
-    @Override
-    public Map<String, Integer> countOfStatuses(Map<String, String> status) {
+    private Map<String, Integer> countOfStatuses(Map<String, String> status) {
         Map<String, Integer> counts = new TreeMap<>();
         counts.put("RED", 0);
         counts.put("ORANGE", 0);
@@ -68,8 +72,8 @@ public class MainServiceImplement implements MainService {
 
     @Override
     public String generateGeneralResult(Object currentPatientId) {
-        Map<String, String> status = buildStatus(buildPoints(currentPatientId));
-        Map<String, Integer> counts = countOfStatuses(status);
+        Map<String, String> status = this.buildStatus(buildPoints(currentPatientId));
+        Map<String, Integer> counts = this.countOfStatuses(status);
         if (counts.get("RED") > 0 || counts.get("ORANGE") >= 3) {
             return "RED";
         } else if (counts.get("ORANGE") == 2) {
@@ -80,9 +84,9 @@ public class MainServiceImplement implements MainService {
 
     @Override
     public ArrayList<Result> generateAllResults(Object currentPatientId) {
-        Map<String, Integer> points = buildPoints(currentPatientId);
+        Map<String, Integer> points = this.buildPoints(currentPatientId);
         ArrayList<Result> result = new ArrayList<>();
-        buildStatus(points).forEach((key, value) -> result.add(new Result(key, points.get(key), value)));
+        this.buildStatus(points).forEach((key, value) -> result.add(new Result(key, points.get(key), value)));
         return result;
     }
 

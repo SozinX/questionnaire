@@ -28,8 +28,8 @@ public class ScheduleService {
         List<Patient> check = patientRepository.findByDateOfQuizEquals(java.time.LocalDate.now().minus(Period.ofDays(1)));
         if (!check.isEmpty()) {
             check.stream().filter(current -> quizRepository.findByPatient(current).isEmpty()).forEach(delete -> {
-                LOGGER.log(Level.INFO, "Scheduled msg: Deleted patient with name {0}", delete.getFirstName());
                 patientRepository.deleteByPatientId(delete.getPatientId());
+                LOGGER.log(Level.INFO, "Scheduled msg: Deleted patient with name {0}", delete.getFirstName());
             });
         } else {
             LOGGER.log(Level.INFO, "Scheduled msg: No one took the test yesterday");
